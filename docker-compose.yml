@@ -1,0 +1,150 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: levels_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: levels_living_db
+      MYSQL_USER: levels_user
+      MYSQL_PASSWORD: levels_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - levels_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: levels_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - levels_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+
+  # User Authentication Service
+  user-auth-service:
+    build:
+      context: ./UserMS
+      dockerfile: Dockerfile
+    container_name: levels_user_auth
+    environment:
+      - DB_HOST=mysql
+      - DB_NAME=levels_living_db
+      - DB_USER=levels_user
+      - DB_PASSWORD=levels_password
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
+      - SECRET_KEY=your-secret-key-change-in-production
+      - SERVICE_PORT=5001
+    ports:
+      - "5001:5001"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - levels_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Customer Service
+  customer-service:
+    build:
+      context: ./CustomerMS
+      dockerfile: Dockerfile
+    container_name: levels_customer
+    environment:
+      - DB_HOST=mysql
+      - DB_NAME=levels_living_db
+      - DB_USER=levels_user
+      - DB_PASSWORD=levels_password
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
+      - SECRET_KEY=customer-service-secret-key
+      - SERVICE_PORT=5002
+      - AUTH_SERVICE_URL=http://user-auth-service:5001
+    ports:
+      - "5002:5002"
+    depends_on:
+      user-auth-service:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - levels_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis Admin Interface (optional - for development)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: levels_redis_admin
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - levels_network
+    profiles:
+      - dev
+
+  # MySQL Admin Interface (optional - for development)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: levels_phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: levels_user
+      PMA_PASSWORD: levels_password
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - levels_network
+    profiles:
+      - dev
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  levels_network:
+    driver: bridge

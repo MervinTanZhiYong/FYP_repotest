@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Levels Living API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .service-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .service-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .endpoint-group {
+            margin-bottom: 25px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .endpoint-group h3 {
+            color: #34495e;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .btn.danger:hover {
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+
+        .btn.success:hover {
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+
+        .response-section {
+            grid-column: 1 / -1;
+            background: #2c3e50;
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .response-section h2 {
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+
+        .response-content {
+            background: #34495e;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #4a6741;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .status-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .status-error {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .status-info {
+            background: #3498db;
+            color: white;
+        }
+
+        .token-display {
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Levels Living API Tester</h1>
+            <p>Test UserMS and CustomerMS endpoints with a simple interface</p>
+        </div>
+
+        <div class="main-content">
+            <!-- UserMS Section -->
+            <div class="service-section">
+                <h2>UserMS - Authentication Service</h2>
+                
+                <!-- Health Check -->
+                <div class="endpoint-group">
+                    <h3>Health Check</h3>
+                    <button class="btn" onclick="testUserHealth()">Check UserMS Health</button>
+                </div>
+
+                <!-- Registration -->
+                <div class="endpoint-group">
+                    <h3>User Registration</h3>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="regEmail" value="admin@levels.sg" placeholder="user@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="regPassword" value="password123" placeholder="Password">
+                    </div>
+                    <div class="form-group">
+                        <label>Role:</label>
+                        <select id="regRole">
+                            <option value="admin">Admin</option>
+                            <option value="hq">HQ</option>
+                            <option value="customer_service">Customer Service</option>
+                            <option value="warehouse">Warehouse</option>
+                            <option value="driver">Driver</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="registerUser()">Register User</button>
+                </div>
+
+                <!-- Login -->
+                <div class="endpoint-group">
+                    <h3>User Login</h3>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="loginEmail" value="admin@levels.sg" placeholder="user@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="loginPassword" value="password123" placeholder="Password">
+                    </div>
+                    <button class="btn success" onclick="loginUser()">Login</button>
+                </div>
+
+                <!-- Token Display -->
+                <div class="endpoint-group" id="tokenSection" style="display: none;">
+                    <h3>Current Session</h3>
+                    <div class="token-display" id="tokenDisplay">No token available</div>
+                    <button class="btn" onclick="getUserProfile()">Get Profile</button>
+                    <button class="btn" onclick="validateToken()">Validate Token</button>
+                    <button class="btn" onclick="listUsers()">List Users</button>
+                    <button class="btn danger" onclick="logoutUser()">Logout</button>
+                </div>
+            </div>
+
+            <!-- CustomerMS Section -->
+            <div class="service-section">
+                <h2>CustomerMS - Customer Service</h2>
+                
+                <!-- Health Check -->
+                <div class="endpoint-group">
+                    <h3>Health Check</h3>
+                    <button class="btn" onclick="testCustomerHealth()">Check CustomerMS Health</button>
+                </div>
+
+                <!-- Create Customer -->
+                <div class="endpoint-group">
+                    <h3>Create Customer</h3>
+                    <div class="form-group">
+                        <label>Contact:</label>
+                        <input type="tel" id="custContact" value="+6591234567" placeholder="+6591234567">
+                    </div>
+                    <div class="form-group">
+                        <label>Street:</label>
+                        <input type="text" id="custStreet" value="123 Orchard Road" placeholder="Street Address">
+                    </div>
+                    <div class="form-group">
+                        <label>Unit:</label>
+                        <input type="text" id="custUnit" value="#12-34" placeholder="Unit Number">
+                    </div>
+                    <div class="form-group">
+                        <label>Postal Code:</label>
+                        <input type="text" id="custPostal" value="238123" placeholder="6-digit postal code">
+                    </div>
+                    <div class="form-group">
+                        <label>Housing Type:</label>
+                        <select id="custHousingType">
+                            <option value="HDB">HDB</option>
+                            <option value="Condo">Condo</option>
+                            <option value="Landed">Landed</option>
+                            <option value="Commercial">Commercial</option>
+                        </select>
+                    </div>
+                    <button class="btn success" onclick="createCustomer()">Create Customer</button>
+                </div>
+
+                <!-- Search Customers -->
+                <div class="endpoint-group">
+                    <h3>Search Customers</h3>
+                    <div class="form-group">
+                        <label>Search Contact:</label>
+                        <input type="tel" id="searchContact" placeholder="+6591234567">
+                    </div>
+                    <div class="form-group">
+                        <label>Customer ID:</label>
+                        <input type="text" id="searchCustomerId" placeholder="Customer UUID">
+                    </div>
+                    <button class="btn" onclick="searchAllCustomers()">Get All Customers</button>
+                    <button class="btn" onclick="searchCustomerById()">Search by ID</button>
+                    <button class="btn" onclick="searchCustomerByContact()">Search by Contact</button>
+                </div>
+
+                <!-- Validate Customer -->
+                <div class="endpoint-group">
+                    <h3>Validate Customer Data</h3>
+                    <div class="form-group">
+                        <label>Test Contact:</label>
+                        <input type="tel" id="validateContact" value="+6587654321" placeholder="+6587654321">
+                    </div>
+                    <div class="form-group">
+                        <label>Test Postal:</label>
+                        <input type="text" id="validatePostal" value="560123" placeholder="560123">
+                    </div>
+                    <button class="btn" onclick="validateCustomerData()">Validate Data</button>
+                </div>
+            </div>
+
+            <!-- Response Section -->
+            <div class="response-section">
+                <h2>API Response</h2>
+                <div class="response-content" id="responseContent">
+Ready to test APIs. Click any button above to make a request.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_USER = 'http://localhost:5001';
+        const API_BASE_CUSTOMER = 'http://localhost:5002';
+        
+        let currentToken = null;
+        let sessionId = null;
+
+        function displayResponse(method, url, status, data, error = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = status >= 200 && status < 300 ? 'status-success' : 
+                               status >= 400 ? 'status-error' : 'status-info';
+            
+            const content = `[${timestamp}] ${method} ${url}
+<span class="status-indicator ${statusClass}">${status}</span>
+
+${error ? `Error: ${error}\n` : ''}${JSON.stringify(data, null, 2)}
+
+${'='.repeat(80)}
+`;
+            
+            document.getElementById('responseContent').innerHTML = content + 
+                document.getElementById('responseContent').innerHTML;
+        }
+
+        function updateTokenDisplay() {
+            const tokenSection = document.getElementById('tokenSection');
+            const tokenDisplay = document.getElementById('tokenDisplay');
+            
+            if (currentToken) {
+                tokenSection.style.display = 'block';
+                tokenDisplay.textContent = `Token: ${currentToken.substring(0, 50)}...`;
+            } else {
+                tokenSection.style.display = 'none';
+                tokenDisplay.textContent = 'No token available';
+            }
+        }
+
+        function getAuthHeaders() {
+            return currentToken ? { 'Authorization': `Bearer ${currentToken}` } : {};
+        }
+
+        async function makeRequest(method, url, data = null, requiresAuth = false) {
+            try {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...(requiresAuth ? getAuthHeaders() : {})
+                };
+
+                const config = {
+                    method: method,
+                    headers: headers
+                };
+
+                if (data) {
+                    config.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(url, config);
+                const responseData = await response.json();
+                
+                displayResponse(method, url, response.status, responseData);
+                return { response, data: responseData };
+            } catch (error) {
+                displayResponse(method, url, 0, {}, error.message);
+                return { response: null, data: null, error };
+            }
+        }
+
+        // UserMS Functions
+        async function testUserHealth() {
+            await makeRequest('GET', `${API_BASE_USER}/health`);
+        }
+
+        async function registerUser() {
+            const data = {
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                role: document.getElementById('regRole').value
+            };
+            await makeRequest('POST', `${API_BASE_USER}/auth/register`, data);
+        }
+
+        async function loginUser() {
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+            
+            const result = await makeRequest('POST', `${API_BASE_USER}/auth/login`, data);
+            
+            if (result.response && result.response.status === 200) {
+                currentToken = result.data.access_token;
+                sessionId = result.data.session_id;
+                updateTokenDisplay();
+            }
+        }
+
+        async function getUserProfile() {
+            await makeRequest('GET', `${API_BASE_USER}/auth/profile`, null, true);
+        }
+
+        async function validateToken() {
+            await makeRequest('POST', `${API_BASE_USER}/auth/validate`, {}, true);
+        }
+
+        async function listUsers() {
+            await makeRequest('GET', `${API_BASE_USER}/auth/users`, null, true);
+        }
+
+        async function logoutUser() {
+            const data = sessionId ? { session_id: sessionId } : {};
+            await makeRequest('POST', `${API_BASE_USER}/auth/logout`, data, true);
+            
+            currentToken = null;
+            sessionId = null;
+            updateTokenDisplay();
+        }
+
+        // CustomerMS Functions
+        async function testCustomerHealth() {
+            await makeRequest('GET', `${API_BASE_CUSTOMER}/health`);
+        }
+
+        async function createCustomer() {
+            if (!currentToken) {
+                alert('Please login first!');
+                return;
+            }
+
+            const data = {
+                customer_contact: document.getElementById('custContact').value,
+                customer_street: document.getElementById('custStreet').value,
+                customer_unit: document.getElementById('custUnit').value,
+                customer_postal_code: document.getElementById('custPostal').value,
+                housing_type: document.getElementById('custHousingType').value,
+                delivery_preferences: {
+                    preferred_time: "morning",
+                    special_instructions: "Call before delivery"
+                },
+                communication_preferences: {
+                    sms: true,
+                    email: false
+                }
+            };
+            
+            await makeRequest('POST', `${API_BASE_CUSTOMER}/customers`, data, true);
+        }
+
+        async function searchAllCustomers() {
+            if (!currentToken) {
+                alert('Please login first!');
+                return;
+            }
+            await makeRequest('GET', `${API_BASE_CUSTOMER}/customers`, null, true);
+        }
+
+        async function searchCustomerById() {
+            if (!currentToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const customerId = document.getElementById('searchCustomerId').value;
+            if (!customerId) {
+                alert('Please enter a Customer ID');
+                return;
+            }
+            
+            await makeRequest('GET', `${API_BASE_CUSTOMER}/customers/${customerId}`, null, true);
+        }
+
+        async function searchCustomerByContact() {
+            if (!currentToken) {
+                alert('Please login first!');
+                return;
+            }
+            
+            const contact = document.getElementById('searchContact').value;
+            if (!contact) {
+                alert('Please enter a contact number');
+                return;
+            }
+            
+            await makeRequest('GET', `${API_BASE_CUSTOMER}/customers/contact/${contact}`, null, true);
+        }
+
+        async function validateCustomerData() {
+            if (!currentToken) {
+                alert('Please login first!');
+                return;
+            }
+
+            const data = {
+                customer_contact: document.getElementById('validateContact').value,
+                customer_postal_code: document.getElementById('validatePostal').value,
+                housing_type: "HDB"
+            };
+            
+            await makeRequest('POST', `${API_BASE_CUSTOMER}/customers/validate`, data, true);
+        }
+
+        // Initialize
+        updateTokenDisplay();
+    </script>
+</body>
+</html>
